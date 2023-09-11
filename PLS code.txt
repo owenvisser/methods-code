@@ -1,0 +1,60 @@
+
+##PLS
+x = data.frame("SBP" = c(120,125,130,121,135,140),
+               "Chol" = c(126,128,128,130,130,132),
+               "Age" = c(38, 40, 42, 42, 44, 46))
+cor(x)#collinearity is present; see the correlation of Chol and Age.
+#Instead of just maximizing variance, we want to maximize
+# the prediction. going to make the SBP=intercept + LV1 
+# which is represented by SBP = int + a_1 Chol + a_2 Age
+# Solve a_1^2 + a_2^2 = 1 for a_1
+# this gives a_1 = sqrt(1 - a_2^2) now choose a random value
+# for a_2. say a_2 = 0.1 and apply the a_1 and a_2 from this
+# to the data as LV1 and make a column.
+a2 = 0.1
+a1 = sqrt(1-a2^2)
+LV1 <- as.matrix(x[,-1]) %*% c(a1,a2)
+new.x <- cbind(x, LV1)
+print(new.x)
+#now find the covariance between LV1 and SBP 
+(the latent variable and the dependent variable)
+cLV1 <- cov(new.x[,c(1,4)])[1,2]
+cLV1
+#now what about a_2 = 0.5?
+a2 = 0.5
+a1 = sqrt(1-a2^2)
+LV1 <- as.matrix(x[,-1]) %*% c(a1,a2)
+new.x <- cbind(x, LV1)
+new.x
+cLV1 <- cov(new.x[,c(1,4)])[1,2]
+cLV1
+#this is a higher covariance; a higher covariance means a better prediction. 
+#but how do we find the best?
+get_cLV1 <- function(a2){
+  a1 = sqrt(1-a2^2)
+  LV1 <- as.matrix(x[,-1]) %*% c(a1,a2)
+  new.x <- cbind(x, LV1)
+  
+  new.x
+  cLV1 <- cov(new.x[,c(1,4)])[1,2]
+  return(cLV1)
+}
+a2 = seq(0,1, by=0.001)
+a1 = sqrt(1-a2^2)
+y <- unlist(lapply(a2, get_cLV1))
+plot(y=y, x=a1)
+#now take the largest value, and we get!!!!
+max_a1 <- a1[cbind(y, a1)[,1] == max(y)]
+max_a1
+#0.52, nice.
+#now use this value as the eigen values. 
+max_a2 <- sqrt(1-max_a1^2)
+LV1 <- as.matrix(x[,-1]) %*% c(max_a1,max_a2)
+new.x <- cbind(x, LV1)
+new.x
+mod8 <- lm(SBP ~ LV1, data=new.x)
+summary(mod8)
+pc.coefs <- mod8$coefficients
+pc.coefs
+pc.beta <- c(pc.coefs[1], c(pc.coefs[-1] %*% c(max_a1, max_a2)))
+#these are the new coefficients for PLS.

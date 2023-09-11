@@ -1,0 +1,24 @@
+
+X <- matrix(rnorm(40), nrow = 10, ncol = 4)
+
+library(ppcor)
+pcor(X)$estimate
+
+partial_corr <- function(X) {
+  cm <- cor(X)
+  icm <- solve(cm)
+  pcm <- matrix(0, ncol(X), ncol(X))
+
+  for (i in 1:ncol(X)) {
+    for (j in 1:ncol(X)) {
+      if (i == j) {
+        pcm[i, j] = 1
+      } else {
+        pcm[i, j] = -icm[i, j] / sqrt(icm[i, i] * icm[j, j])
+      }
+    }
+  }
+  pcm
+}
+result <- partial_corr(X)
+print(result)

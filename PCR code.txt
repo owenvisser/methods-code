@@ -1,0 +1,27 @@
+data = data.frame("SBP" = c(120,125,130,121,135,140),
+                  "Chol" = c(126,128,128,130,130,132),
+                  "Age" = c(38, 40, 42, 42, 44, 46),
+                  "Weight" = c(60,80,70,85,90,87),
+                  "Height" = c(165,180,170,185,190,187))
+full_model <- lm(SBP ~ Chol + Age + Weight + Height, data=data)
+summary(full_model)
+
+covariates <- as.matrix(data[,-1])
+eigen_decomp <- eigen(var(covariates))
+
+#gives % of variance of each PrincipleComponent.
+variance_ratio <- eigen_decomp$values / sum(eigen_decomp$values) * 100
+variance_ratio 
+
+eigen_matrix <- eigen_decomp$vectors
+PCA <- covariates %*% eigen_matrix
+colnames(PCA) <- c("PC1", "PC2", "PC3", "PC4")
+PCA_data <- cbind(data, PCA)
+
+pcr_model <- lm(SBP ~ PC1 + PC2, data=PCA_data)
+summary(pcr_model)
+
+#these are the new coefficients based on the first 2 PCs
+pcr.coefs <- pcr_model$coefficients
+pcr.beta <- c(pcr.coefs[1],
+              c(pcr.coefs[2:3] %*% t(eigen_decomp$vectors[,1:2])))

@@ -1,0 +1,9 @@
+MOCKDATA <- data.frame(SBP = c(126, 128,128,130,130,132),
+                       DBP = c(78,80,82,82,84,86))
+MOCKDATA_CENTERED <- t(t(x)- colMeans(x))
+EIGEN_DECOMP <- eigen(var(MOCKDATA))
+VARIANCE_PERCENTAGE <- EIGEN_DECOMP$values/sum(EIGEN_DECOMP$values)*100
+EIGEN_VECTORS <- EIGEN_DECOMP$vectors
+PCA <- MOCKDATA_CENTERED %*% EIGEN_VECTORS
+colnames(PCA) <- c("PC1", "PC2")
+plot(PCA)

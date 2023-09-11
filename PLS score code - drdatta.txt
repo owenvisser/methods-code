@@ -1,0 +1,35 @@
+
+PLSnet <- function(data, ncom=3){
+## Input:
+# data - microarray dataset with genes as rows and samples in columns
+# (no gene names in the first column)
+# ncom  - a number of PLS components (latent variables) in PLS models
+## Output:
+# PLSnet- a matrix of interactions between genes in column 1 and column 2
+        data <- scale(t(data)) # scale the data
+        n <- ncol(data)
+        s <- matrix(0, n, n)
+        standr <- function(x) x/as.numeric(sqrt(t(x)%*%x))
+        for(i in 1:n){ # loop through each gene
+                X <- data[,-i]
+                y <- data[,i]
+                c <- matrix(0, n-1, ncom)
+                TT <- matrix(0, nrow(data), ncom)
+                tX<- X
+                for(k in 1:ncom){ # construct ncom PLS components
+                        c[,k] <- standr(t(tX)%*%y)
+                        TT[,k] <- tX%*%c[,k]
+      tX <- tX-TT[,k]%*%solve(t(TT[,k])%*%TT[,k])%*%t(TT[,k])%*%tX
+                }
+          b <- solve(t(TT)%*%TT)%*%t(TT)%*%y # least squares solution
+                temp <- c%*%b
+                if (i == 1) s[i,] <- c(0,temp)
+                else ( if (i == n) s[i,] <- c(temp,0)
+                else  s[i,] <- c(temp[1:(i-1)],0,temp[i:(n-1)]) )
+        }
+        s <- 0.5*(s+t(s)) # construct symmetrized coefficient
+        ss <- max(abs(s))
+        diag(s) <- rep(ss,length(diag(s)))
+        s <- s/ss
+        s
+}
